@@ -23,7 +23,10 @@
                     </Style.Triggers>
                 </Style>
             </TabControl.Resources>
-
+            <!-- Logi -->
+            <TabItem Header="Historia zdarzeń">
+                <views:EventLogsView/>
+            </TabItem>
             <!-- ══════ DODAJ ══════ -->
             <TabItem Header="Dodaj">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
@@ -46,8 +49,8 @@
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Kwota (zł)" Style="{StaticResource FieldLabel}"/>
                                         <TextBox x:Name="AmountTextBox" Margin="0,0,0,15"
-         Text="{Binding AmountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-         PreviewTextInput="AmountTextBox_PreviewTextInput"/>
+                                        Text="{Binding AmountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                          PreviewTextInput="AmountTextBox_PreviewTextInput"/>
                                         <TextBlock Text="Konto" Style="{StaticResource FieldLabel}"/>
                                         <ComboBox Margin="0,0,0,15" ItemsSource="{Binding Accounts}"
                                                   SelectedItem="{Binding SelectedAccount}" DisplayMemberPath="DisplayName"/>

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using wpf_projekt.Models;
 
 namespace wpf_projekt.models
 {
@@ -14,6 +15,7 @@ namespace wpf_projekt.models
         public DbSet<SharedAccount> SharedAccounts { get; set; }
         public DbSet<wpf_projekt.Models.Transaction> Transactions { get; set; }
         public DbSet<TransactionType> TransactionTypes { get; set; }
+        public DbSet<EventLog> EventLogs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

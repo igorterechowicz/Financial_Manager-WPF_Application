@@ -4,12 +4,14 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Xml.Linq;
 using wpf_projekt.models;
 using wpf_projekt.Models;
 using wpf_projekt.Repositories;
-using System.ComponentModel;
+using wpf_projekt.Services;
 
 namespace wpf_projekt.ViewModels
 {
@@ -19,6 +21,7 @@ namespace wpf_projekt.ViewModels
         private readonly ITransactionRepository _transactionRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly AppDbContext _context;
+        private readonly IEventLogService _eventLogService;
 
         // ── Sub-ViewModels ────────────────────────────────────────────────────────
         public TransactionsViewModel TransactionsVm { get; }
@@ -60,12 +63,14 @@ namespace wpf_projekt.ViewModels
             AppDbContext context,
             IAccountRepository accountRepository,
             ITransactionRepository transactionRepository,
-            ICategoryRepository categoryRepository)
+            ICategoryRepository categoryRepository,
+            IEventLogService eventLogService)
         {
             _context = context;
             _accountRepository = accountRepository;
             _transactionRepository = transactionRepository;
             _categoryRepository = categoryRepository;
+            _eventLogService = eventLogService;
 
             TransactionsVm = new TransactionsViewModel(this, transactionRepository, categoryRepository);
             SummaryVm = new SummaryViewModel(this);
@@ -165,6 +170,14 @@ namespace wpf_projekt.ViewModels
                 }
 
                 await _transactionRepository.AddAsync(newTransaction);
+
+                await _eventLogService.LogAsync(
+                EventType.TransactionAdded,
+                $"Dodano transakcję: {amount} zł",
+                newTransaction.Id);
+
+
+
                 await LoadDataAsync();
                 MessageBox.Show($"Zapisano! Aktualne saldo: {updatedBalance:F2} zł");
                 ClearTransactionForm();
@@ -179,6 +192,10 @@ namespace wpf_projekt.ViewModels
         private async Task AddAccountAsync()
         {
             var name = NewAccountName.Trim();
+            await _eventLogService.LogAsync(
+            EventType.AccountCreated,
+            $"Utworzono konto: {name}");
+
             if (string.IsNullOrWhiteSpace(name))
             {
                 MessageBox.Show("Podaj nazwę konta.");
@@ -292,6 +309,10 @@ namespace wpf_projekt.ViewModels
             }
 
             await _transactionRepository.AddRangeAsync(new[] { outgoing, incoming });
+            await _eventLogService.LogAsync(
+            EventType.TransferCompleted,
+            $"Transfer {amount} zł z {TransferFrom.Name} do {TransferTo.Name}");
+
             await LoadDataAsync();
             TransferAmountText = string.Empty;
             TransferDescription = string.Empty;
