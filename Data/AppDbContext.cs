@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,8 @@ namespace wpf_projekt.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=finance_manager.db");
+            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "finance_manager.db");
+            optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

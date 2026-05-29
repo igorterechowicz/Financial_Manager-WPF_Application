@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using wpf_projekt.Data;
 using wpf_projekt.Entities;
@@ -10,30 +9,9 @@ namespace wpf_projekt.Services
         public static async Task InitializeAsync()
         {
             using var context = new AppDbContext();
-            await context.Database.EnsureCreatedAsync();
-            await ApplyPendingSchemaUpdatesAsync(context);
-            await SeedInitialDataAsync(context);
-        }
-
-        private static async Task ApplyPendingSchemaUpdatesAsync(AppDbContext context)
-        {
-            await TryAddColumnAsync(context, "PersonalAccounts", "Name", "TEXT NOT NULL DEFAULT ''");
-            await TryAddColumnAsync(context, "SharedAccounts", "Name", "TEXT NOT NULL DEFAULT ''");
-            await TryAddColumnAsync(context, "Transactions", "TransferGroupId", "TEXT NULL");
-            await TryAddColumnAsync(context, "Users", "Email", "TEXT NOT NULL DEFAULT ''");
-            await TryAddColumnAsync(context, "Users", "PasswordHash", "TEXT NOT NULL DEFAULT ''");
+            await context.Database.MigrateAsync();
             await EnsureSeedUserHasCredentialsAsync(context);
-        }
-
-        private static async Task TryAddColumnAsync(AppDbContext context, string table, string column, string def)
-        {
-            try
-            {
-                await context.Database.ExecuteSqlRawAsync(
-                    $"ALTER TABLE {table} ADD COLUMN {column} {def}");
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name"))
-            { }
+            await SeedInitialDataAsync(context);
         }
 
         private static async Task EnsureSeedUserHasCredentialsAsync(AppDbContext context)
