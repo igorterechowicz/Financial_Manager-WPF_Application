@@ -1,10 +1,12 @@
-﻿using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using System.Windows;
 using System.Windows.Input;
 using wpf_projekt.Data;
 using wpf_projekt.Entities;
 using wpf_projekt.Repositories;
 using wpf_projekt.Services;
 using wpf_projekt.ViewModels;
+
 
 namespace wpf_projekt
 {
@@ -14,14 +16,16 @@ namespace wpf_projekt
 
         public MainWindow()
         {
+
             InitializeComponent();
 
-            var context = new AppDbContext();
+            var context = App.ServiceProvider.GetRequiredService<AppDbContext>();
+            var eventLogService = new EventLogService(context);
             var accountRepo = new AccountRepository(context);
             var transactionRepo = new TransactionRepository(context);
             var categoryRepo = new CategoryRepository(context);
 
-            _viewModel = new MainViewModel(accountRepo, transactionRepo, categoryRepo, AppSession.CurrentUser!);
+            _viewModel = new MainViewModel(accountRepo, transactionRepo, categoryRepo, context, eventLogService, AppSession.CurrentUser!);
             DataContext = _viewModel;
 
             var user = AppSession.CurrentUser!;
@@ -30,8 +34,6 @@ namespace wpf_projekt
             Loaded += async (_, _) => await _viewModel.InitializeAsync();
         }
 
-        // Jedyna pozostała metoda w code-behind – walidacja inputu klawiszowego
-        // Nie zawiera logiki biznesowej, więc może zostać tutaj.
         private void AmountTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = !char.IsDigit(e.Text, 0) && e.Text != "," && e.Text != ".";
@@ -45,4 +47,5 @@ namespace wpf_projekt
             Close();
         }
     }
+
 }

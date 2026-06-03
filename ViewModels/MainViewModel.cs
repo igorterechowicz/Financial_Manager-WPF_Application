@@ -1,13 +1,16 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
+using wpf_projekt.Data;
 using wpf_projekt.Entities;
 using wpf_projekt.Models;
 using wpf_projekt.Repositories;
-using System.ComponentModel;
+using wpf_projekt.Services;
 
 namespace wpf_projekt.ViewModels
 {
@@ -16,17 +19,20 @@ namespace wpf_projekt.ViewModels
         private readonly IAccountRepository _accountRepository;
         private readonly ITransactionRepository _transactionRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly AppDbContext _context;
+        private readonly IEventLogService _eventLogService;
 
-        //  Sub-ViewModels 
+        //  Sub-ViewModels
         public TransactionsViewModel TransactionsVm { get; }
         public SummaryViewModel SummaryVm { get; }
 
-        //  Kolekcje 
+        //  Kolekcje
         public ObservableCollection<Transaction> Transactions { get; } = new();
         public ObservableCollection<AccountListItem> Accounts { get; } = new();
         public ObservableCollection<TransactionType> Categories { get; } = new();
+        public ObservableCollection<EventLog> Logs { get; } = new();
 
-        //  Właściwości bindowane — formularz transakcji (WALIDOWANE) 
+        //  Właściwości bindowane — formularz transakcji (WALIDOWANE)
 
         private string _amountText = string.Empty;
         public string AmountText
@@ -42,11 +48,11 @@ namespace wpf_projekt.ViewModels
         [ObservableProperty] private bool _isIncome = false;
         [ObservableProperty] private bool _isExpense = true;
 
-        //  Właściwości bindowane — formularz konta 
+        //  Właściwości bindowane — formularz konta
         [ObservableProperty] private string _newAccountName = string.Empty;
         [ObservableProperty] private string _newAccountType = "Osobiste";
 
-        //  Właściwości bindowane — formularz transferu 
+        //  Właściwości bindowane — formularz transferu
         [ObservableProperty] private AccountListItem? _transferFrom;
         [ObservableProperty] private AccountListItem? _transferTo;
         [ObservableProperty] private string _transferAmountText = string.Empty;
@@ -59,11 +65,15 @@ namespace wpf_projekt.ViewModels
             IAccountRepository accountRepository,
             ITransactionRepository transactionRepository,
             ICategoryRepository categoryRepository,
+            AppDbContext context,
+            IEventLogService eventLogService,
             User currentUser)
         {
             _accountRepository = accountRepository;
             _transactionRepository = transactionRepository;
             _categoryRepository = categoryRepository;
+            _context = context;
+            _eventLogService = eventLogService;
             _currentUser = currentUser;
 
             TransactionsVm = new TransactionsViewModel(this, transactionRepository, categoryRepository, accountRepository);
@@ -82,11 +92,14 @@ namespace wpf_projekt.ViewModels
             Categories.Clear();
             Accounts.Clear();
             Transactions.Clear();
+            Logs.Clear();
 
             var dbCategories = await _categoryRepository.GetAllAsync();
             var dbPersonal = await _accountRepository.GetPersonalAccountsByUserAsync(_currentUser.Id);
             var dbShared = await _accountRepository.GetSharedAccountsByUserAsync(_currentUser.Id);
             var dbTransactions = await _transactionRepository.GetAllWithDetailsByUserAsync(_currentUser.Id);
+
+            var dbLogs = await _context.EventLogs.OrderByDescending(x => x.Timestamp).ToListAsync();
 
             foreach (var c in dbCategories) Categories.Add(c);
 
@@ -109,9 +122,10 @@ namespace wpf_projekt.ViewModels
                 });
 
             foreach (var t in dbTransactions) Transactions.Add(t);
+            foreach (var log in dbLogs) Logs.Add(log);
         }
 
-        //  Komendy 
+        //  Komendy
 
         [RelayCommand]
         private async Task SaveTransactionAsync()
@@ -161,6 +175,12 @@ namespace wpf_projekt.ViewModels
                 }
 
                 await _transactionRepository.AddAsync(newTransaction);
+
+                await _eventLogService.LogAsync(
+                EventType.TransactionAdded,
+                $"Dodano transakcję: {amount} zł",
+                newTransaction.Id);
+
                 await LoadDataAsync();
                 MessageBox.Show($"Zapisano! Aktualne saldo: {updatedBalance:F2} zł");
                 ClearTransactionForm();
@@ -175,11 +195,16 @@ namespace wpf_projekt.ViewModels
         private async Task AddAccountAsync()
         {
             var name = NewAccountName.Trim();
+
             if (string.IsNullOrWhiteSpace(name))
             {
                 MessageBox.Show("Podaj nazwę konta.");
                 return;
             }
+
+            await _eventLogService.LogAsync(
+            EventType.AccountCreated,
+            $"Utworzono konto: {name}");
 
             if (NewAccountType == "Wspólne")
                 await _accountRepository.AddSharedAccountAsync(new SharedAccount
@@ -285,6 +310,10 @@ namespace wpf_projekt.ViewModels
             }
 
             await _transactionRepository.AddRangeAsync(new[] { outgoing, incoming });
+            await _eventLogService.LogAsync(
+            EventType.TransferCompleted,
+            $"Transfer {amount} zł z {TransferFrom.Name} do {TransferTo.Name}");
+
             await LoadDataAsync();
             TransferAmountText = string.Empty;
             TransferDescription = string.Empty;
@@ -300,7 +329,7 @@ namespace wpf_projekt.ViewModels
                 await LoadDataAsync();
         }
 
-        //  Metody pomocnicze 
+        //  Metody pomocnicze
         private void ClearTransactionForm()
         {
             AmountText = string.Empty;

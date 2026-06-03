@@ -1,21 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using wpf_projekt.Entities;
+using wpf_projekt.Models;
 
 namespace wpf_projekt.Data
 {
     public class AppDbContext : DbContext
     {
+
+        public AppDbContext() { }
+
         public DbSet<User> Users { get; set; }
         public DbSet<PersonalAccount> PersonalAccounts { get; set; }
         public DbSet<SharedAccount> SharedAccounts { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<TransactionType> TransactionTypes { get; set; }
+        public DbSet<EventLog> EventLogs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
