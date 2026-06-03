@@ -1,14 +1,13 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Xml.Linq;
-using wpf_projekt.models;
+using wpf_projekt.Data;
+using wpf_projekt.Entities;
 using wpf_projekt.Models;
 using wpf_projekt.Repositories;
 using wpf_projekt.Services;
@@ -23,17 +22,17 @@ namespace wpf_projekt.ViewModels
         private readonly AppDbContext _context;
         private readonly IEventLogService _eventLogService;
 
-        // ── Sub-ViewModels ────────────────────────────────────────────────────────
+        //  Sub-ViewModels
         public TransactionsViewModel TransactionsVm { get; }
         public SummaryViewModel SummaryVm { get; }
 
-        // ── Kolekcje ─────────────────────────────────────────────────────────────
+        //  Kolekcje
         public ObservableCollection<Transaction> Transactions { get; } = new();
         public ObservableCollection<AccountListItem> Accounts { get; } = new();
         public ObservableCollection<TransactionType> Categories { get; } = new();
         public ObservableCollection<EventLog> Logs { get; } = new();
 
-        // ── Właściwości bindowane — formularz transakcji (WALIDOWANE) ───────────
+        //  Właściwości bindowane — formularz transakcji (WALIDOWANE)
 
         private string _amountText = string.Empty;
         public string AmountText
@@ -49,39 +48,41 @@ namespace wpf_projekt.ViewModels
         [ObservableProperty] private bool _isIncome = false;
         [ObservableProperty] private bool _isExpense = true;
 
-        // ── Właściwości bindowane — formularz konta ──────────────────────────────
+        //  Właściwości bindowane — formularz konta
         [ObservableProperty] private string _newAccountName = string.Empty;
         [ObservableProperty] private string _newAccountType = "Osobiste";
 
-        // ── Właściwości bindowane — formularz transferu ──────────────────────────
+        //  Właściwości bindowane — formularz transferu
         [ObservableProperty] private AccountListItem? _transferFrom;
         [ObservableProperty] private AccountListItem? _transferTo;
         [ObservableProperty] private string _transferAmountText = string.Empty;
         [ObservableProperty] private string _transferDescription = string.Empty;
 
-        // ── Konstruktor ───────────────────────────────────────────────────────────
+        private readonly User _currentUser;
+
+        //  Konstruktor
         public MainViewModel(
-            AppDbContext context,
             IAccountRepository accountRepository,
             ITransactionRepository transactionRepository,
             ICategoryRepository categoryRepository,
-            IEventLogService eventLogService)
+            AppDbContext context,
+            IEventLogService eventLogService,
+            User currentUser)
         {
-            _context = context;
             _accountRepository = accountRepository;
             _transactionRepository = transactionRepository;
             _categoryRepository = categoryRepository;
+            _context = context;
             _eventLogService = eventLogService;
+            _currentUser = currentUser;
 
-            TransactionsVm = new TransactionsViewModel(this, transactionRepository, categoryRepository);
+            TransactionsVm = new TransactionsViewModel(this, transactionRepository, categoryRepository, accountRepository);
             SummaryVm = new SummaryViewModel(this);
         }
 
-        // ── Inicjalizacja ─────────────────────────────────────────────────────────
+        //  Inicjalizacja
         public async Task InitializeAsync()
         {
-            await _context.Database.MigrateAsync();
-            await SeedInitialDataAsync();
             await _categoryRepository.EnsureExistsAsync("Transfer");
             await LoadDataAsync();
         }
@@ -94,9 +95,9 @@ namespace wpf_projekt.ViewModels
             Logs.Clear();
 
             var dbCategories = await _categoryRepository.GetAllAsync();
-            var dbPersonal = await _accountRepository.GetAllPersonalAccountsAsync();
-            var dbShared = await _accountRepository.GetAllSharedAccountsAsync();
-            var dbTransactions = await _transactionRepository.GetAllWithDetailsAsync();
+            var dbPersonal = await _accountRepository.GetPersonalAccountsByUserAsync(_currentUser.Id);
+            var dbShared = await _accountRepository.GetSharedAccountsByUserAsync(_currentUser.Id);
+            var dbTransactions = await _transactionRepository.GetAllWithDetailsByUserAsync(_currentUser.Id);
 
             var dbLogs = await _context.EventLogs.OrderByDescending(x => x.Timestamp).ToListAsync();
 
@@ -124,7 +125,7 @@ namespace wpf_projekt.ViewModels
             foreach (var log in dbLogs) Logs.Add(log);
         }
 
-        // ── Komendy ───────────────────────────────────────────────────────────────
+        //  Komendy
 
         [RelayCommand]
         private async Task SaveTransactionAsync()
@@ -180,8 +181,6 @@ namespace wpf_projekt.ViewModels
                 $"Dodano transakcję: {amount} zł",
                 newTransaction.Id);
 
-
-
                 await LoadDataAsync();
                 MessageBox.Show($"Zapisano! Aktualne saldo: {updatedBalance:F2} zł");
                 ClearTransactionForm();
@@ -196,9 +195,6 @@ namespace wpf_projekt.ViewModels
         private async Task AddAccountAsync()
         {
             var name = NewAccountName.Trim();
-            await _eventLogService.LogAsync(
-            EventType.AccountCreated,
-            $"Utworzono konto: {name}");
 
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -206,20 +202,21 @@ namespace wpf_projekt.ViewModels
                 return;
             }
 
-            var firstUser = await _accountRepository.GetFirstUserAsync();
-            if (firstUser == null) { MessageBox.Show("Brak użytkownika w bazie."); return; }
+            await _eventLogService.LogAsync(
+            EventType.AccountCreated,
+            $"Utworzono konto: {name}");
 
             if (NewAccountType == "Wspólne")
                 await _accountRepository.AddSharedAccountAsync(new SharedAccount
                 {
                     Name = name,
                     Balance = 0m,
-                    User1Id = firstUser.Id,
-                    User2Id = firstUser.Id
+                    User1Id = _currentUser.Id,
+                    User2Id = _currentUser.Id
                 });
             else
                 await _accountRepository.AddPersonalAccountAsync(new PersonalAccount
-                { Name = name, Balance = 0m, UserId = firstUser.Id });
+                { Name = name, Balance = 0m, UserId = _currentUser.Id });
 
             await LoadDataAsync();
             NewAccountName = string.Empty;
@@ -332,7 +329,7 @@ namespace wpf_projekt.ViewModels
                 await LoadDataAsync();
         }
 
-        // ── Metody pomocnicze ─────────────────────────────────────────────────────
+        //  Metody pomocnicze
         private void ClearTransactionForm()
         {
             AmountText = string.Empty;
@@ -340,46 +337,6 @@ namespace wpf_projekt.ViewModels
             TransactionDate = DateTime.Now;
         }
 
-        private async Task ApplyPendingSchemaUpdatesAsync()
-        {
-            await TryAddColumnAsync("PersonalAccounts", "Name", "TEXT NOT NULL DEFAULT ''");
-            await TryAddColumnAsync("SharedAccounts", "Name", "TEXT NOT NULL DEFAULT ''");
-            await TryAddColumnAsync("Transactions", "TransferGroupId", "TEXT NULL");
-        }
-
-        private async Task TryAddColumnAsync(string table, string column, string def)
-        {
-            try
-            {
-                await _context.Database.ExecuteSqlRawAsync(
-                    $"ALTER TABLE {table} ADD COLUMN {column} {def}");
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name"))
-            { /* kolumna już istnieje */ }
-        }
-
-        private async Task SeedInitialDataAsync()
-        {
-            if (await _context.Users.AnyAsync()) return;
-
-            _context.TransactionTypes.AddRange(
-                new TransactionType { Name = "Jedzenie" },
-                new TransactionType { Name = "Transport" },
-                new TransactionType { Name = "Wypłata" },
-                new TransactionType { Name = "Rozrywka" },
-                new TransactionType { Name = "Transfer" }
-            );
-
-            var user = new User { FirstName = "Jan", LastName = "Kowalski", Earnings = 5000 };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            _context.PersonalAccounts.Add(new PersonalAccount
-            { Name = "Konto główne", Balance = 2500, UserId = user.Id });
-            _context.SharedAccounts.Add(new SharedAccount
-            { Name = "Konto wspólne", Balance = 1200, User1Id = user.Id, User2Id = user.Id });
-            await _context.SaveChangesAsync();
-        }
 
         // --- LOGIKA WALIDACJI (IDataErrorInfo) ---
         public string Error => null;

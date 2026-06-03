@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace wpf_projekt.models
+namespace wpf_projekt.Models
 {
     public abstract class ObservableModel : INotifyPropertyChanged
     {

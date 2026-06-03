@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Windows;
-using wpf_projekt.models;
+using wpf_projekt.Entities;
 using wpf_projekt.Repositories;
 
 namespace wpf_projekt.ViewModels

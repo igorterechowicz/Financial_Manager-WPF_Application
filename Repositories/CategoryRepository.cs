@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using wpf_projekt.models;
+using wpf_projekt.Data;
+using wpf_projekt.Entities;
 
 namespace wpf_projekt.Repositories
 {

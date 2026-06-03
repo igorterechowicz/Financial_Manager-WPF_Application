@@ -1,4 +1,4 @@
-﻿namespace wpf_projekt.models
+﻿namespace wpf_projekt.Models
 {
     public class MonthItem
     {

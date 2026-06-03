@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using wpf_projekt.Models;
 
-namespace wpf_projekt.models
+namespace wpf_projekt.Entities
 {
     public class SharedAccount : ObservableModel
     {
@@ -21,6 +22,6 @@ namespace wpf_projekt.models
         public virtual User User1 { get; set; }
         [Required]
         public virtual User User2 { get; set; }
-        public virtual ICollection<wpf_projekt.Models.Transaction> Transactions { get; set; } = new List<wpf_projekt.Models.Transaction>();
+        public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     }
 }

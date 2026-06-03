@@ -4,21 +4,21 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using wpf_projekt.Models;
-using wpf_projekt.models;
+using wpf_projekt.Entities;
+using wpf_projekt.Import;
 
 namespace wpf_projekt.Services
 {
     public class CsvImportResult
     {
-        public List<Transaction> Imported    { get; init; } = new();
-        public List<string>      Errors      { get; init; } = new();
-        public int               Duplicates  { get; set; }
+        public List<Transaction> Imported { get; init; } = new();
+        public List<string> Errors { get; init; } = new();
+        public int Duplicates { get; set; }
     }
 
     public class CsvImportService
     {
-        // ── Odczyt pliku CSV → słowniki wierszy ─────────────────────────────────
+        //  Odczyt pliku CSV  słowniki wierszy 
 
         public static (string[] Headers, List<Dictionary<string, string>> Rows) ParseFile(string path)
         {
@@ -59,25 +59,27 @@ namespace wpf_projekt.Services
             return (headers, rows);
         }
 
-        // ── Konwersja wierszy → modele Transaction ───────────────────────────────
+        //  Konwersja wierszy  modele Transaction 
 
         public static CsvImportResult MapToTransactions(
             List<Dictionary<string, string>> rows,
             CsvMappingProfile profile,
-            TransactionType category,
+            TransactionType defaultCategory,
             int? personalAccountId,
             int? sharedAccountId,
-            IEnumerable<Transaction> existingTransactions)
+            IEnumerable<Transaction> existingTransactions,
+            IEnumerable<TransactionType>? allCategories = null)
         {
-            var result    = new CsvImportResult();
-            var existing  = existingTransactions.ToList();
+            var result = new CsvImportResult();
+            var existing = existingTransactions.ToList();
+            var categories = allCategories?.ToList() ?? new List<TransactionType>();
             int rowNumber = 1;
 
             foreach (var row in rows)
             {
                 rowNumber++;
 
-                // ── Data ────────────────────────────────────────────────────────
+                //  Data
                 if (!row.TryGetValue(profile.ColumnDate!, out var rawDate) ||
                     !TryParseDate(rawDate, profile.DateFormat, out DateTime date))
                 {
@@ -85,7 +87,7 @@ namespace wpf_projekt.Services
                     continue;
                 }
 
-                // ── Kwota ───────────────────────────────────────────────────────
+                //  Kwota
                 if (!row.TryGetValue(profile.ColumnAmount!, out var rawAmount) ||
                     !TryParseAmount(rawAmount, out decimal amount))
                 {
@@ -93,24 +95,20 @@ namespace wpf_projekt.Services
                     continue;
                 }
 
+                //  Kierunek transakcji
                 bool isPositive;
-                if (profile.AmountSignDeterminesDirection)
+                if (!profile.AmountSignDeterminesDirection
+                    && !string.IsNullOrWhiteSpace(profile.ColumnIsPositive)
+                    && row.TryGetValue(profile.ColumnIsPositive!, out var rawType)
+                    && !string.IsNullOrWhiteSpace(rawType))
                 {
-                    isPositive = amount >= 0;
-                    amount     = Math.Abs(amount);
-                }
-                else if (!string.IsNullOrWhiteSpace(profile.ColumnIsPositive) &&
-                         row.TryGetValue(profile.ColumnIsPositive, out var rawType))
-                {
-                    isPositive = rawType.Contains("przychód", StringComparison.OrdinalIgnoreCase) ||
-                                 rawType.Contains("wpływ",    StringComparison.OrdinalIgnoreCase) ||
-                                 rawType.Contains("+",        StringComparison.Ordinal);
+                    isPositive = IsPositiveType(rawType);
                 }
                 else
                 {
                     isPositive = amount >= 0;
-                    amount     = Math.Abs(amount);
                 }
+                amount = Math.Abs(amount);
 
                 if (amount == 0)
                 {
@@ -118,17 +116,29 @@ namespace wpf_projekt.Services
                     continue;
                 }
 
-                // ── Opis ────────────────────────────────────────────────────────
+                //  Opis
                 string description = string.Empty;
                 if (!string.IsNullOrWhiteSpace(profile.ColumnDescription) &&
                     row.TryGetValue(profile.ColumnDescription, out var rawDesc))
                     description = rawDesc.Trim();
 
-                // ── Deduplikacja ────────────────────────────────────────────────
+                //  Kategoria
+                TransactionType resolvedCategory = defaultCategory;
+                if (!string.IsNullOrWhiteSpace(profile.ColumnCategory)
+                    && row.TryGetValue(profile.ColumnCategory!, out var rawCategory)
+                    && !string.IsNullOrWhiteSpace(rawCategory)
+                    && categories.Count > 0)
+                {
+                    var match = categories.FirstOrDefault(c =>
+                        c.Name.Equals(rawCategory.Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (match != null) resolvedCategory = match;
+                }
+
+                //  Deduplikacja
                 bool isDuplicate = existing.Any(t =>
-                    t.Date.Date   == date.Date &&
-                    t.Amount      == amount    &&
-                    t.IsPositive  == isPositive &&
+                    t.Date.Date == date.Date &&
+                    t.Amount == amount &&
+                    t.IsPositive == isPositive &&
                     t.Description == description);
 
                 if (isDuplicate)
@@ -137,16 +147,16 @@ namespace wpf_projekt.Services
                     continue;
                 }
 
-                // ── Budowanie modelu ────────────────────────────────────────────
+                //  Budowanie modelu
                 var tx = new Transaction
                 {
-                    Amount            = amount,
-                    IsPositive        = isPositive,
-                    Date              = date,
-                    Description       = description,
-                    TransactionTypeId = category.Id,
+                    Amount = amount,
+                    IsPositive = isPositive,
+                    Date = date,
+                    Description = description,
+                    TransactionTypeId = resolvedCategory.Id,
                     PersonalAccountId = personalAccountId,
-                    SharedAccountId   = sharedAccountId
+                    SharedAccountId = sharedAccountId
                 };
 
                 result.Imported.Add(tx);
@@ -155,7 +165,25 @@ namespace wpf_projekt.Services
             return result;
         }
 
-        // ── Zapis / odczyt profilu mapowania ────────────────────────────────────
+        private static readonly string[] PositiveTypeKeywords =
+            { "przychód", "przychod", "uznanie", "wpływ", "wplyw", "przychodzący", "przychodzacy", "credit", "income" };
+
+        private static readonly string[] NegativeTypeKeywords =
+            { "wydatek", "obciążenie", "obciazenie", "wypłata", "wyplata", "wychodzący", "wychodzacy", "debit", "expense", "zakup" };
+
+        private static bool IsPositiveType(string raw)
+        {
+            var normalized = raw.Trim();
+            foreach (var kw in PositiveTypeKeywords)
+                if (normalized.Contains(kw, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            foreach (var kw in NegativeTypeKeywords)
+                if (normalized.Contains(kw, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            return normalized.Contains('+');
+        }
+
+        //  Zapis i odczyt profilu mapowania 
 
         private static readonly string ProfilesDir =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -185,7 +213,7 @@ namespace wpf_projekt.Services
             return list;
         }
 
-        // ── Helpery ─────────────────────────────────────────────────────────────
+        //  Helpery 
 
         private static bool TryParseDate(string? raw, string format, out DateTime result)
         {
@@ -207,11 +235,11 @@ namespace wpf_projekt.Services
 
             // Normalizuj: usuń spacje, zamień przecinek dziesiętny na kropkę
             string normalized = raw.Trim()
-                                   .Replace("\u00a0", "")   // nbsp
+                                   .Replace("\u00a0", "")   // nbsp, ai to dodał
                                    .Replace(" ", "");
 
             // Jeśli jest i przecinek i kropka, ten ostatni jest separatorem dziesiętnym
-            bool hasDot   = normalized.Contains('.');
+            bool hasDot = normalized.Contains('.');
             bool hasComma = normalized.Contains(',');
 
             if (hasDot && hasComma)
@@ -235,7 +263,7 @@ namespace wpf_projekt.Services
         {
             var fields = new List<string>();
             bool inQuotes = false;
-            var  current  = new System.Text.StringBuilder();
+            var current = new System.Text.StringBuilder();
 
             foreach (char c in line)
             {

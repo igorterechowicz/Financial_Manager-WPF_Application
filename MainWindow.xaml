@@ -8,7 +8,25 @@
         WindowStartupLocation="CenterScreen">
 
     <Grid Margin="15">
-        <TabControl Background="Transparent" BorderThickness="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Pasek górny: użytkownik + wylogowanie -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <Button Content="Wyloguj"
+                    Style="{StaticResource SecondaryBtn}"
+                    DockPanel.Dock="Right"
+                    Width="100"
+                    Click="LogoutButton_Click"/>
+            <TextBlock x:Name="UserNameBlock"
+                       VerticalAlignment="Center"
+                       FontSize="13"
+                       Foreground="{StaticResource MutedBrush}"/>
+        </DockPanel>
+
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
             <!-- Stylizowanie zakładek -->
             <TabControl.Resources>
                 <Style TargetType="TabItem">

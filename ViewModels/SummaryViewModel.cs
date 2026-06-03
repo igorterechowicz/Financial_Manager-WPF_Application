@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
-using wpf_projekt.models;
+using wpf_projekt.Entities;
 using wpf_projekt.Models;
 
 namespace wpf_projekt.ViewModels

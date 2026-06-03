@@ -4,36 +4,45 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="500" d:DesignWidth="900">
+             d:DesignHeight="600" d:DesignWidth="900">
 
-    <StackPanel Margin="10">
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Filtry i przyciski -->
+            <RowDefinition Height="*"/>
+            <!-- Tabela DataGrid -->
+            <RowDefinition Height="Auto"/>
+            <!-- Statystyki na dole -->
+        </Grid.RowDefinitions>
 
+        <!-- 1. SEKCOJA FILTRÓW I PRZYCISKÓW -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
             <StackPanel Margin="0,0,10,0">
-                <TextBlock Text="Rok" FontWeight="Bold"/>
-                <ComboBox Width="80"
+                <TextBlock Text="Rok" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ComboBox Width="100" Height="28"
                           ItemsSource="{Binding AvailableYears}"
                           SelectedItem="{Binding SelectedYear}"/>
             </StackPanel>
 
             <StackPanel Margin="0,0,10,0">
-                <TextBlock Text="Miesiąc" FontWeight="Bold"/>
-                <ComboBox Width="100"
+                <TextBlock Text="Miesiąc" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ComboBox Width="100" Height="28"
                           ItemsSource="{Binding AvailableMonths}"
                           SelectedItem="{Binding SelectedMonth}"
                           DisplayMemberPath="Label"/>
             </StackPanel>
 
             <StackPanel Margin="0,0,10,0">
-                <TextBlock Text="Kategoria" FontWeight="Bold"/>
-                <ComboBox Width="130"
+                <TextBlock Text="Kategoria" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ComboBox Width="110" Height="28"
                           ItemsSource="{Binding AvailableCategories}"
                           SelectedItem="{Binding SelectedCategory}"/>
             </StackPanel>
 
             <StackPanel Margin="0,0,10,0">
-                <TextBlock Text="Rodzaj" FontWeight="Bold"/>
-                <ComboBox Width="100"
+                <TextBlock Text="Rodzaj" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ComboBox Width="100" Height="28"
                           SelectedItem="{Binding SelectedType}">
                     <ComboBox.Items>
                         <system:String xmlns:system="clr-namespace:System;assembly=mscorlib">Wszystkie</system:String>
@@ -43,9 +52,9 @@
                 </ComboBox>
             </StackPanel>
 
-            <StackPanel>
-                <TextBlock Text="Data" FontWeight="Bold"/>
-                <ComboBox Width="120"
+            <StackPanel Margin="0,0,15,0">
+                <TextBlock Text="Data" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ComboBox Width="130" Height="28"
                           SelectedItem="{Binding SelectedSort}">
                     <ComboBox.Items>
                         <system:String xmlns:system="clr-namespace:System;assembly=mscorlib">Od najnowszej</system:String>
@@ -54,61 +63,132 @@
                 </ComboBox>
             </StackPanel>
 
-
-            <StackPanel VerticalAlignment="Bottom" Margin="20,0,0,0">
-                <Button Content="Eksportuj do CSV"
-                        Width="120" Height="22"
+            <!-- Przyciski eksportu i importu -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="10,0,0,0">
+                <Button Content="Eksportuj CSV"
+                        Width="110" Height="28" Margin="0,0,8,0"
                         Command="{Binding ExportToCsvCommand}"
                         ToolTip="Zapisz widoczne dane do pliku Excel/CSV"
                         Cursor="Hand"/>
-            </StackPanel>
-            
-            <StackPanel VerticalAlignment="Bottom" Margin="20,0,0,0">
-                <Button Content="Importuj z CSV" 
-        Command="{Binding ImportCsvCommand}" 
-        Width="120" Height="22" 
-        HorizontalAlignment="Right"
-        ToolTip="Wczytaj transakcje z pliku CSV" Cursor="Hand"/>
-        </StackPanel>
-        
-        
-    </StackPanel>
 
-        <DataGrid ItemsSource="{Binding FilteredTransactions}"
+                <Button Content="Importuj z CSV" 
+                        Command="{Binding ImportCsvAsyncCommand}" 
+                        Width="110" Height="28" 
+                        ToolTip="Wczytaj transakcje z pliku CSV" 
+                        Cursor="Hand"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 2. NOWOCZESNA, CZYTELNA TABELA DATAGRID -->
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding FilteredTransactions}"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
-                  Height="400"
-                  VerticalScrollBarVisibility="Auto">
+                  CanUserSortColumns="True"
+                  VerticalScrollBarVisibility="Auto"
+                  BorderBrush="#CCCCCC" BorderThickness="1"
+                  RowBackground="White" AlternatingRowBackground="#F9F9F9"
+                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E5E5E5"
+                  RowHeight="32">
+
+            <!-- STYL NAGŁÓWKÓW: Dodaje rączkę, podświetlenie przy najechaniu i dymek z informacją -->
+            <!-- STYL NAGŁÓWKÓW: Dodaje BasedOn (przywraca strzałkę sortowania), rączkę i podświetlenie -->
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                    <Setter Property="Background" Value="#EAEAEA" />
+                    <Setter Property="Foreground" Value="#333333" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Padding" Value="10,6" />
+                    <Setter Property="BorderThickness" Value="0,0,1,2" />
+                    <Setter Property="BorderBrush" Value="#CCCCCC" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="ToolTip" Value="Kliknij nagłówek, aby posortować kolumnę" />
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#DCDCDC" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Data"
                                     Binding="{Binding Date, StringFormat={}{0:dd.MM.yyyy}}"
-                                    Width="100"/>
+                                    Width="110"/>
+
                 <DataGridTextColumn Header="Kategoria"
                                     Binding="{Binding TransactionType.Name}"
-                                    Width="150"/>
+                                    Width="140"/>
+
+                <!-- KOLOROWANIE, WYRÓWNANIE I FORMATOWANIE KWOTY -->
                 <DataGridTextColumn Header="Kwota"
-                                    Binding="{Binding Amount}"
-                                    Width="80">
+                                    Binding="{Binding Amount, StringFormat={}{0:F2} zł}"
+                                    Width="110">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="0,0,15,0"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsPositive}" Value="True">
                                     <Setter Property="Foreground" Value="Green"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsPositive}" Value="False">
                                     <Setter Property="Foreground" Value="Red"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
+
                 <DataGridTextColumn Header="Typ"
                                     Binding="{Binding TypeName}"
-                                    Width="80"/>
+                                    Width="90"/>
+
                 <DataGridTextColumn Header="Opis"
                                     Binding="{Binding Description}"
-                                    Width="*"/>
+                                    Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="10,0,0,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
-    </StackPanel>
+
+        <!-- 3. SEKCOJA STATYSTYK (DYNAMICZNE PODSUMOWANIE NA DOLE) -->
+        <Border Grid.Row="2" Background="#F5F5F5" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="6" Padding="15" Margin="0,15,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Podsumowanie aktualnego widoku:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Foreground="#333333"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,25,0" VerticalAlignment="Center">
+                    <TextBlock Text="Przychody: " Foreground="#555555"/>
+                    <TextBlock Text="{Binding TotalIncome, StringFormat={}{0:F2} zł}" FontWeight="Bold" Foreground="Green"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,25,0" VerticalAlignment="Center">
+                    <TextBlock Text="Wydatki: " Foreground="#555555"/>
+                    <TextBlock Text="{Binding TotalExpense, StringFormat={}{0:F2} zł}" FontWeight="Bold" Foreground="Red"/>
+                </StackPanel>
+
+                <Border Grid.Column="3" BorderBrush="#DDDDDD" BorderThickness="1,0,0,0" Padding="15,0,0,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Saldo końcowe: " FontWeight="Bold" Foreground="#333333"/>
+                        <TextBlock Text="{Binding Balance, StringFormat={}{0:F2} zł}" FontWeight="Bold" FontSize="14" Foreground="#222222"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>

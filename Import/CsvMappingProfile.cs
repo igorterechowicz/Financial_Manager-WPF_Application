@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace wpf_projekt.Models
+namespace wpf_projekt.Import
 {
     /// <summary>
     /// Schemat mapowania kolumn CSV → pola modelu Transaction.
@@ -25,7 +25,10 @@ namespace wpf_projekt.Models
         // Format daty w pliku, np. "dd.MM.yyyy" lub "yyyy-MM-dd"
         public string DateFormat { get; set; } = "dd.MM.yyyy";
 
-        // Domyślna kategoria dla importowanych transakcji
+        // Opcjonalna kolumna z nazwą kategorii w pliku CSV
+        public string? ColumnCategory { get; set; }
+
+        // Domyślna kategoria dla importowanych transakcji (gdy brak kolumny lub brak dopasowania)
         public string DefaultCategoryName { get; set; } = "Import";
 
         [JsonIgnore]

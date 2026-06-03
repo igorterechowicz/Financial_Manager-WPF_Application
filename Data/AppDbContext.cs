@@ -1,17 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using wpf_projekt.Entities;
 using wpf_projekt.Models;
-using wpf_projekt.models;
 
-namespace wpf_projekt.models
+namespace wpf_projekt.Data
 {
     public class AppDbContext : DbContext
     {
-     
+
         public AppDbContext() { }
 
         public DbSet<User> Users { get; set; }
@@ -23,8 +20,8 @@ namespace wpf_projekt.models
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            
-            optionsBuilder.UseSqlite($"Data Source={System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "finance_manager.db")}");
+            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "finance_manager.db");
+            optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,6 +37,10 @@ namespace wpf_projekt.models
                 .WithMany()
                 .HasForeignKey(s => s.User2Id)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
         }
     }
 }

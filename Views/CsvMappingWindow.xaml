@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:wpf_projekt.ViewModels"
         xmlns:conv="clr-namespace:wpf_projekt.Converters"
         Title="Import CSV — Mapowanie kolumn"
-        Width="680" Height="640"
+        Width="680" Height="700"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="#F5F7FA">
@@ -204,6 +204,8 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="10"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Tytuł sekcji -->
@@ -259,6 +261,14 @@
                     <CheckBox Content="Kierunek wynika ze znaku kwoty (+ / −)"
                               IsChecked="{Binding AmountSignDeterminesDirection}"
                               FontSize="12" Margin="0,18,0,0"/>
+                </StackPanel>
+
+                <!-- Kolumna kategorii -->
+                <StackPanel Grid.Row="8" Grid.Column="0">
+                    <TextBlock Text="Kolumna kategorii (opcjonalnie)"
+                               Style="{StaticResource FieldLabel}"/>
+                    <ComboBox ItemsSource="{Binding AvailableColumns}"
+                              SelectedItem="{Binding SelectedColumnCategory}"/>
                 </StackPanel>
             </Grid>
         </Border>

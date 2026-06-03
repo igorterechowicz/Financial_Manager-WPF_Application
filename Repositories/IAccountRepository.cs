@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using wpf_projekt.models;
-using wpf_projekt.Models;
+using wpf_projekt.Entities;
 
 namespace wpf_projekt.Repositories
 {
@@ -16,5 +15,7 @@ namespace wpf_projekt.Repositories
         Task UpdatePersonalAccountAsync(PersonalAccount account);
         Task UpdateSharedAccountAsync(SharedAccount account);
         Task<User?> GetFirstUserAsync();
+        Task<List<PersonalAccount>> GetPersonalAccountsByUserAsync(int userId);
+        Task<List<SharedAccount>> GetSharedAccountsByUserAsync(int userId);
     }
 }

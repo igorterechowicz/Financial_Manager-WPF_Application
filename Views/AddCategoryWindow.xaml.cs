@@ -1,5 +1,5 @@
 ﻿using System.Windows;
-using wpf_projekt.models;
+using wpf_projekt.Data;
 using wpf_projekt.Repositories;
 using wpf_projekt.ViewModels;
 

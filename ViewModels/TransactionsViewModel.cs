@@ -9,8 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using Microsoft.Win32;
-using wpf_projekt.Models;
-using wpf_projekt.models;
+using wpf_projekt.Entities;
 using System.Windows.Input;
 using wpf_projekt.Services;
 using wpf_projekt.Repositories;
@@ -29,34 +28,40 @@ namespace wpf_projekt.ViewModels
         private readonly MainViewModel _mainVm;
         private readonly ITransactionRepository _transactionRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IAccountRepository _accountRepository;
 
 
-        // ── Kolekcje filtrów ─────────────────────────────────────────────────────
+        //  Kolekcje filtrów 
         public ObservableCollection<string> AvailableYears { get; } = new();
         public ObservableCollection<MonthItem> AvailableMonths { get; } = new();
         public ObservableCollection<string> AvailableCategories { get; } = new();
 
-        // ── Wynik filtrowania ────────────────────────────────────────────────────
+        //  Wynik filtrowania 
         [ObservableProperty] private List<Transaction> _filteredTransactions = new();
 
-        // ── Filtry ───────────────────────────────────────────────────────────────
+        //  Filtry 
         [ObservableProperty] private string _selectedYear = "Wszystkie";
         [ObservableProperty] private MonthItem? _selectedMonth;
         [ObservableProperty] private string _selectedCategory = "Wszystkie";
         [ObservableProperty] private string _selectedType = "Wszystkie";   // Wszystkie / Wydatek / Przychód
         [ObservableProperty] private string _selectedSort = "Od najnowszej"; // Od najnowszej / Od najstarszej
+        [ObservableProperty] private decimal _totalIncome;
+        [ObservableProperty] private decimal _totalExpense;
+        [ObservableProperty] private decimal _balance;
 
         public TransactionsViewModel(MainViewModel mainVm,
         ITransactionRepository transactionRepository,
-        ICategoryRepository categoryRepository)
+        ICategoryRepository categoryRepository,
+        IAccountRepository accountRepository)
         {
             _mainVm = mainVm;
             _transactionRepository = transactionRepository;
             _categoryRepository = categoryRepository;
+            _accountRepository = accountRepository;
             _mainVm.Transactions.CollectionChanged += (_, _) => Refresh();
         }
 
-        // ── Wywołane przez widok po załadowaniu ──────────────────────────────────
+        //  Wywołane przez widok po załadowaniu 
         public void Load()
         {
             BuildFilters();
@@ -124,6 +129,7 @@ namespace wpf_projekt.ViewModels
                 : data.OrderByDescending(t => t.Date);
 
             FilteredTransactions = data.ToList();
+                    CalculateStatistics(); 
         }
 
         private void Refresh()
@@ -132,7 +138,7 @@ namespace wpf_projekt.ViewModels
             Apply();
         }
 
-        // ── Eksport CSV ──────────────────────────────────────────────────────────
+        //  Eksport CSV 
         [RelayCommand]
         private void ExportToCsv()
         {
@@ -179,8 +185,6 @@ namespace wpf_projekt.ViewModels
         }
 
 
-
-
         [RelayCommand]
         private async System.Threading.Tasks.Task ImportCsvAsync()
         {
@@ -212,6 +216,7 @@ namespace wpf_projekt.ViewModels
                     headers, rows,
                     _transactionRepository,
                     _categoryRepository,
+                    _accountRepository,
                     _mainVm);
 
                 var mappingWindow = new wpf_projekt.Views.CsvMappingWindow(mappingVm)
@@ -233,10 +238,18 @@ namespace wpf_projekt.ViewModels
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        /// <summary>Pomocniczy rekord reprezentujący miesiąc w filtrze.</summary>
+
+        private void CalculateStatistics()
+        {
+            TotalIncome = FilteredTransactions.Where(t => t.IsPositive).Sum(t => t.Amount);
+            TotalExpense = FilteredTransactions.Where(t => !t.IsPositive).Sum(t => t.Amount);
+            Balance = TotalIncome - TotalExpense;
+        }
+        //Pomocniczy rekord reprezentujący miesiąc w filtrze
         public record MonthItem(int? Number, string Label)
         {
             public override string ToString() => Label;
         }
+
     }
 }

@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using wpf_projekt.models;
+using wpf_projekt.Data;
 using wpf_projekt.Models;
 
 namespace wpf_projekt.Services

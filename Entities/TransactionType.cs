@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace wpf_projekt.models
+namespace wpf_projekt.Entities
 {
     public class TransactionType
     {
@@ -14,6 +14,6 @@ namespace wpf_projekt.models
         [Required]
         public string Name { get; set; } // np. "Zakupy", "Wypłata"
 
-        public virtual ICollection<wpf_projekt.Models.Transaction> Transactions { get; set; }
+        public virtual ICollection<Transaction> Transactions { get; set; }
     }
 }

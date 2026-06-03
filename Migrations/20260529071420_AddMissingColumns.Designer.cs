@@ -11,14 +11,65 @@ using wpf_projekt.Data;
 namespace wpf_projekt.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260325184810_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260529071420_AddMissingColumns")]
+    partial class AddMissingColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.25");
+
+            modelBuilder.Entity("wpf_projekt.Entities.PersonalAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PersonalAccounts");
+                });
+
+            modelBuilder.Entity("wpf_projekt.Entities.SharedAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("User1Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("User2Id")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("User1Id");
+
+                    b.HasIndex("User2Id");
+
+                    b.ToTable("SharedAccounts");
+                });
 
             modelBuilder.Entity("wpf_projekt.Entities.Transaction", b =>
                 {
@@ -48,6 +99,9 @@ namespace wpf_projekt.Migrations
                     b.Property<int>("TransactionTypeId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid?>("TransferGroupId")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PersonalAccountId");
@@ -57,49 +111,6 @@ namespace wpf_projekt.Migrations
                     b.HasIndex("TransactionTypeId");
 
                     b.ToTable("Transactions");
-                });
-
-            modelBuilder.Entity("wpf_projekt.Entities.PersonalAccount", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Balance")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PersonalAccounts");
-                });
-
-            modelBuilder.Entity("wpf_projekt.Entities.SharedAccount", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Balance")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("User1Id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("User2Id")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("User1Id");
-
-                    b.HasIndex("User2Id");
-
-                    b.ToTable("SharedAccounts");
                 });
 
             modelBuilder.Entity("wpf_projekt.Entities.TransactionType", b =>
@@ -123,8 +134,12 @@ namespace wpf_projekt.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Earnings")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Earnings")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -134,37 +149,21 @@ namespace wpf_projekt.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("SharedAccountId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.HasIndex("SharedAccountId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("wpf_projekt.Entities.Transaction", b =>
-                {
-                    b.HasOne("wpf_projekt.Entities.PersonalAccount", "PersonalAccount")
-                        .WithMany("Transactions")
-                        .HasForeignKey("PersonalAccountId");
-
-                    b.HasOne("wpf_projekt.Entities.SharedAccount", "SharedAccount")
-                        .WithMany("Transactions")
-                        .HasForeignKey("SharedAccountId");
-
-                    b.HasOne("wpf_projekt.Entities.TransactionType", "TransactionType")
-                        .WithMany("Transactions")
-                        .HasForeignKey("TransactionTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PersonalAccount");
-
-                    b.Navigation("SharedAccount");
-
-                    b.Navigation("TransactionType");
                 });
 
             modelBuilder.Entity("wpf_projekt.Entities.PersonalAccount", b =>
@@ -195,6 +194,29 @@ namespace wpf_projekt.Migrations
                     b.Navigation("User1");
 
                     b.Navigation("User2");
+                });
+
+            modelBuilder.Entity("wpf_projekt.Entities.Transaction", b =>
+                {
+                    b.HasOne("wpf_projekt.Entities.PersonalAccount", "PersonalAccount")
+                        .WithMany("Transactions")
+                        .HasForeignKey("PersonalAccountId");
+
+                    b.HasOne("wpf_projekt.Entities.SharedAccount", "SharedAccount")
+                        .WithMany("Transactions")
+                        .HasForeignKey("SharedAccountId");
+
+                    b.HasOne("wpf_projekt.Entities.TransactionType", "TransactionType")
+                        .WithMany("Transactions")
+                        .HasForeignKey("TransactionTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PersonalAccount");
+
+                    b.Navigation("SharedAccount");
+
+                    b.Navigation("TransactionType");
                 });
 
             modelBuilder.Entity("wpf_projekt.Entities.User", b =>
