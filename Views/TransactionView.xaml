@@ -72,7 +72,7 @@
                         Cursor="Hand"/>
 
                 <Button Content="Importuj z CSV" 
-                        Command="{Binding ImportCsvAsyncCommand}" 
+                        Command="{Binding ImportCsvCommand}"
                         Width="110" Height="28" 
                         ToolTip="Wczytaj transakcje z pliku CSV" 
                         Cursor="Hand"/>
