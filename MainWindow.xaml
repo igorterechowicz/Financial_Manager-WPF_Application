@@ -43,7 +43,7 @@
             </TabControl.Resources>
 
             <!-- ══════ DODAJ ══════ -->
-            <TabItem Header="Dodaj">
+            <TabItem Header="Nowa operacja">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
                     <StackPanel>
 
