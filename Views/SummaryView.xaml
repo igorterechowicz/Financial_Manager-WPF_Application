@@ -17,11 +17,6 @@
         <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,20">
             <StackPanel Orientation="Horizontal">
                 <StackPanel Margin="0,0,15,0">
-                    <TextBlock Text="Konto" Style="{StaticResource FieldLabel}"/>
-                    <ComboBox Width="180" ItemsSource="{Binding AvailableAccounts}"
-                              SelectedItem="{Binding SelectedAccount}" DisplayMemberPath="Name"/>
-                </StackPanel>
-                <StackPanel Margin="0,0,15,0">
                     <TextBlock Text="Rok" Style="{StaticResource FieldLabel}"/>
                     <ComboBox Width="100" ItemsSource="{Binding AvailableYears}"
                               SelectedItem="{Binding SelectedYear}"/>

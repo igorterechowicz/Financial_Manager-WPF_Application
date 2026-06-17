@@ -59,6 +59,7 @@ namespace wpf_projekt.ViewModels
             _categoryRepository = categoryRepository;
             _accountRepository = accountRepository;
             _mainVm.Transactions.CollectionChanged += (_, _) => Refresh();
+            _mainVm.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(MainViewModel.ActiveAccount)) Refresh(); };
         }
 
         //  Wywołane przez widok po załadowaniu 
@@ -111,6 +112,13 @@ namespace wpf_projekt.ViewModels
         private void Apply()
         {
             var data = _mainVm.Transactions.AsEnumerable();
+
+            // Filtr aktywnego konta
+            var acc = _mainVm.ActiveAccount;
+            if (acc != null)
+                data = acc.Kind == wpf_projekt.Models.AccountKind.Personal
+                    ? data.Where(t => t.PersonalAccountId == acc.Id)
+                    : data.Where(t => t.SharedAccountId == acc.Id);
 
             if (SelectedYear != "Wszystkie" && !string.IsNullOrEmpty(SelectedYear))
                 data = data.Where(t => t.Date.Year.ToString() == SelectedYear);

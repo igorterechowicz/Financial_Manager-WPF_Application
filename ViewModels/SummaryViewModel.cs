@@ -14,11 +14,9 @@ namespace wpf_projekt.ViewModels
         private readonly MainViewModel _mainVm;
 
         // ── Filtry ───────────────────────────────────────────────────────────────
-        public ObservableCollection<object> AvailableAccounts { get; } = new();
         public ObservableCollection<string> AvailableYears { get; } = new();
         public ObservableCollection<MonthItem> AvailableMonths { get; } = new();
 
-        [ObservableProperty] private object? _selectedAccount;
         [ObservableProperty] private string _selectedYear = "Wszystkie";
         [ObservableProperty] private MonthItem? _selectedMonth;
 
@@ -32,6 +30,7 @@ namespace wpf_projekt.ViewModels
         {
             _mainVm = mainVm;
             _mainVm.Transactions.CollectionChanged += (_, _) => Refresh();
+            _mainVm.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(MainViewModel.ActiveAccount)) Refresh(); };
         }
 
         public void Load()
@@ -42,13 +41,6 @@ namespace wpf_projekt.ViewModels
 
         private void BuildFilters()
         {
-            // KONTA
-            AvailableAccounts.Clear();
-            AvailableAccounts.Add("Wszystkie");
-            foreach (var acc in _mainVm.Accounts)
-                AvailableAccounts.Add(acc);
-            SelectedAccount = AvailableAccounts[0];
-
             // LATA
             AvailableYears.Clear();
             AvailableYears.Add("Wszystkie");
@@ -68,7 +60,6 @@ namespace wpf_projekt.ViewModels
             SelectedMonth = AvailableMonths[0];
         }
 
-        partial void OnSelectedAccountChanged(object? value) => Calculate();
         partial void OnSelectedYearChanged(string value) => Calculate();
         partial void OnSelectedMonthChanged(MonthItem? value) => Calculate();
 
@@ -76,13 +67,12 @@ namespace wpf_projekt.ViewModels
         {
             var data = _mainVm.Transactions.AsEnumerable();
 
-            // Filtr konta
-            if (SelectedAccount is AccountListItem acc)
-            {
+            // Filtr aktywnego konta
+            var acc = _mainVm.ActiveAccount;
+            if (acc != null)
                 data = acc.Kind == AccountKind.Personal
                     ? data.Where(t => t.PersonalAccountId == acc.Id)
                     : data.Where(t => t.SharedAccountId == acc.Id);
-            }
 
             // Filtr roku
             if (SelectedYear != "Wszystkie" && !string.IsNullOrEmpty(SelectedYear))

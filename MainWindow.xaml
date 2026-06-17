@@ -65,10 +65,6 @@
                                         <TextBox x:Name="AmountTextBox" Margin="0,0,0,15"
                                         Text="{Binding AmountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                           PreviewTextInput="AmountTextBox_PreviewTextInput"/>
-                                        <TextBlock Text="Konto" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox Margin="0,0,0,15" ItemsSource="{Binding Accounts}"
-                                                  SelectedItem="{Binding SelectedAccount}" DisplayMemberPath="DisplayName"/>
-
                                         <TextBlock Text="Data transakcji" Style="{StaticResource FieldLabel}"/>
                                         <DatePicker Margin="0,0,0,15" SelectedDate="{Binding TransactionDate}"/>
                                     </StackPanel>
@@ -113,13 +109,6 @@
                                 <TextBlock Text="Transfer między kontami" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
 
                                 <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <StackPanel Margin="0,0,15,10" Width="180">
-                                        <TextBlock Text="Z konta" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox ItemsSource="{Binding Accounts}" SelectedItem="{Binding TransferFrom}" DisplayMemberPath="DisplayName"/>
-                                    </StackPanel>
-
-                                    <TextBlock Text="→" FontSize="20" FontWeight="Bold" Foreground="{StaticResource MutedBrush}" Margin="0,20,15,10"/>
-
                                     <StackPanel Margin="0,0,15,10" Width="180">
                                         <TextBlock Text="Na konto" Style="{StaticResource FieldLabel}"/>
                                         <ComboBox ItemsSource="{Binding Accounts}" SelectedItem="{Binding TransferTo}" DisplayMemberPath="DisplayName"/>

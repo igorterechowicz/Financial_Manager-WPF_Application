@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -143,15 +144,15 @@ namespace wpf_projekt.ViewModels
         [RelayCommand]
         private async Task SaveTransactionAsync()
         {
-            if (!decimal.TryParse(AmountText.Replace('.', ','), out decimal amount))
+            if (!decimal.TryParse(AmountText.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount))
             {
                 MessageBox.Show("Wprowadź poprawną kwotę.");
                 return;
             }
 
-            if (SelectedCategory == null || SelectedAccount == null)
+            if (SelectedCategory == null || ActiveAccount == null)
             {
-                MessageBox.Show("Wybierz kategorię i konto!");
+                MessageBox.Show("Wybierz kategorię! (Upewnij się że masz wybrane aktywne konto w zakładce Konta)");
                 return;
             }
 
@@ -168,9 +169,9 @@ namespace wpf_projekt.ViewModels
             {
                 decimal updatedBalance;
 
-                if (SelectedAccount.Kind == AccountKind.Personal)
+                if (ActiveAccount.Kind == AccountKind.Personal)
                 {
-                    var acc = await _accountRepository.GetPersonalAccountByIdAsync(SelectedAccount.Id);
+                    var acc = await _accountRepository.GetPersonalAccountByIdAsync(ActiveAccount.Id);
                     if (acc == null) { MessageBox.Show("Nie znaleziono konta osobistego."); return; }
                     acc.Balance += IsIncome ? amount : -amount;
                     newTransaction.PersonalAccountId = acc.Id;
@@ -179,7 +180,7 @@ namespace wpf_projekt.ViewModels
                 }
                 else
                 {
-                    var acc = await _accountRepository.GetSharedAccountByIdAsync(SelectedAccount.Id);
+                    var acc = await _accountRepository.GetSharedAccountByIdAsync(ActiveAccount.Id);
                     if (acc == null) { MessageBox.Show("Nie znaleziono konta wspólnego."); return; }
                     acc.Balance += IsIncome ? amount : -amount;
                     newTransaction.SharedAccountId = acc.Id;
@@ -238,7 +239,7 @@ namespace wpf_projekt.ViewModels
         [RelayCommand]
         private async Task ExecuteTransferAsync()
         {
-            if (!decimal.TryParse(TransferAmountText.Replace('.', ','), out decimal amount) || amount <= 0)
+            if (!decimal.TryParse(TransferAmountText.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) || amount <= 0)
             {
                 MessageBox.Show("Podaj poprawną kwotę transferu.");
                 return;
@@ -357,6 +358,7 @@ namespace wpf_projekt.ViewModels
                 a.IsActive = false;
             account.IsActive = true;
             ActiveAccount = account;
+            TransferFrom = account;
             AppSession.SetCurrentAccount(account);
         }
 
@@ -380,10 +382,13 @@ namespace wpf_projekt.ViewModels
                 {
                     if (string.IsNullOrWhiteSpace(AmountText)) return null;
 
+                    var sepIndex = AmountText.LastIndexOfAny(new[] { ',', '.' });
+                    if (sepIndex >= 0 && AmountText.Length - sepIndex <= 3) return null;
+
                     string normalized = AmountText.Replace('.', ',');
                     if (!decimal.TryParse(normalized, out decimal result))
                     {
-                        return "Nieprawidłowy format kwoty (np. wpisz 100,50)";
+                        return "Nieprawidłowy format kwoty (np. wpisz X,XX)";
                     }
 
                     if (normalized.Contains(",") && normalized.Substring(normalized.IndexOf(",") + 1).Length > 2)
