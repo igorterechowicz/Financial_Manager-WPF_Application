@@ -169,10 +169,20 @@
 
                                     <StackPanel Grid.Column="1" Margin="0,0,15,0" Width="150">
                                         <TextBlock Text="Typ" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox SelectedValue="{Binding NewAccountType}">
+                                        <ComboBox SelectedValue="{Binding NewAccountType}" SelectedValuePath="Content">
                                             <ComboBoxItem Content="Osobiste" IsSelected="True"/>
                                             <ComboBoxItem Content="Wspólne"/>
                                         </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1"
+                                                Margin="0,80,15,0"
+                                                Width="150">
+                                        <TextBlock Text="Drugi użytkownik"
+                                                   Style="{StaticResource FieldLabel}" />
+                                        <ComboBox
+                                            ItemsSource="{Binding Users}"
+                                            SelectedItem="{Binding SelectedSecondUser}"
+                                            DisplayMemberPath="Email"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
