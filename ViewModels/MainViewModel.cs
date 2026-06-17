@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
@@ -47,6 +48,9 @@ namespace wpf_projekt.ViewModels
         [ObservableProperty] private AccountListItem? _selectedAccount;
         [ObservableProperty] private bool _isIncome = false;
         [ObservableProperty] private bool _isExpense = true;
+
+        //  Aktywne konto
+        [ObservableProperty] private AccountListItem? _activeAccount;
 
         //  Właściwości bindowane — formularz konta
         [ObservableProperty] private string _newAccountName = string.Empty;
@@ -123,6 +127,15 @@ namespace wpf_projekt.ViewModels
 
             foreach (var t in dbTransactions) Transactions.Add(t);
             foreach (var log in dbLogs) Logs.Add(log);
+
+            // Przywróć aktywne konto lub auto-wybierz gdy jedno
+            var previousId = AppSession.CurrentAccount?.Id;
+            var previousKind = AppSession.CurrentAccount?.Kind;
+            var restored = Accounts.FirstOrDefault(a => a.Id == previousId && a.Kind == previousKind);
+            if (restored != null)
+                SetActiveAccount(restored);
+            else if (Accounts.Count == 1)
+                SetActiveAccount(Accounts[0]);
         }
 
         //  Komendy
@@ -327,6 +340,24 @@ namespace wpf_projekt.ViewModels
             window.Owner = Application.Current.MainWindow;
             if (window.ShowDialog() == true)
                 await LoadDataAsync();
+        }
+
+        [RelayCommand]
+        private void SelectAccount(AccountListItem? account)
+        {
+            if (account == null) return;
+            SetActiveAccount(account);
+            MessageBox.Show($"Aktywne konto: {account.DisplayName}", "Konto wybrane",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void SetActiveAccount(AccountListItem account)
+        {
+            foreach (var a in Accounts)
+                a.IsActive = false;
+            account.IsActive = true;
+            ActiveAccount = account;
+            AppSession.SetCurrentAccount(account);
         }
 
         //  Metody pomocnicze
