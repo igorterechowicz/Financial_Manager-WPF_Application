@@ -371,9 +371,19 @@ namespace wpf_projekt.ViewModels
         private void SelectAccount(AccountListItem? account)
         {
             if (account == null) return;
-            SetActiveAccount(account);
-            MessageBox.Show($"Aktywne konto: {account.DisplayName}", "Konto wybrane",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            if (account.IsActive)
+                ClearActiveAccount();
+            else
+                SetActiveAccount(account);
+        }
+
+        private void ClearActiveAccount()
+        {
+            foreach (var a in Accounts)
+                a.IsActive = false;
+            ActiveAccount = null;
+            TransferFrom = null;
+            AppSession.SetCurrentAccount(null);
         }
 
         private void SetActiveAccount(AccountListItem account)
