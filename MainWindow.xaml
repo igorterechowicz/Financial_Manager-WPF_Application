@@ -56,7 +56,6 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="30"/>
-                                        <!-- Odstęp między kolumnami -->
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
@@ -66,10 +65,6 @@
                                         <TextBox x:Name="AmountTextBox" Margin="0,0,0,15"
                                         Text="{Binding AmountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                           PreviewTextInput="AmountTextBox_PreviewTextInput"/>
-                                        <TextBlock Text="Konto" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox Margin="0,0,0,15" ItemsSource="{Binding Accounts}"
-                                                  SelectedItem="{Binding SelectedAccount}" DisplayMemberPath="DisplayName"/>
-
                                         <TextBlock Text="Data transakcji" Style="{StaticResource FieldLabel}"/>
                                         <DatePicker Margin="0,0,0,15" SelectedDate="{Binding TransactionDate}"/>
                                     </StackPanel>
@@ -102,25 +97,18 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Przycisk zapisu pod kolumnami -->
+<!-- Przycisk zapisu pod kolumnami -->
                                 <Button Content="Dodaj transakcję" Command="{Binding SaveTransactionCommand}"
                                         Style="{StaticResource PrimaryBtn}" HorizontalAlignment="Right" Width="180" Margin="0,10,0,0"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- KARTA 2: TRANSFER -->
+ <!-- KARTA 2: TRANSFER -->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <TextBlock Text="Transfer między kontami" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
 
                                 <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <StackPanel Margin="0,0,15,10" Width="180">
-                                        <TextBlock Text="Z konta" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox ItemsSource="{Binding Accounts}" SelectedItem="{Binding TransferFrom}" DisplayMemberPath="DisplayName"/>
-                                    </StackPanel>
-
-                                    <TextBlock Text="→" FontSize="20" FontWeight="Bold" Foreground="{StaticResource MutedBrush}" Margin="0,20,15,10"/>
-
                                     <StackPanel Margin="0,0,15,10" Width="180">
                                         <TextBlock Text="Na konto" Style="{StaticResource FieldLabel}"/>
                                         <ComboBox ItemsSource="{Binding Accounts}" SelectedItem="{Binding TransferTo}" DisplayMemberPath="DisplayName"/>
@@ -150,10 +138,143 @@
             <TabItem Header="Konta">
                 <ScrollViewer Margin="0,10,0,0">
                     <StackPanel>
+
+<!--Lista kont-->
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Zarządzanie kontami" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                                <TextBlock Text="Twoje konta" FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
+                                <TextBlock Text="Kliknij 'Wybierz' lub kliknij dwukrotnie, aby ustawić konto jako aktywne."
+                                           Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,12"/>
 
+                                <ListBox ItemsSource="{Binding Accounts}"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0,0,0,8"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="6" Padding="14,10">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#F5F7FA"/>
+                                                        <Setter Property="BorderBrush" Value="#DADDE3"/>
+                                                        <Setter Property="BorderThickness" Value="1.5"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                <Setter Property="Background" Value="#EAF4FB"/>
+                                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                                <Setter Property="BorderThickness" Value="2"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- Ikona aktywności -->
+                                                    <TextBlock Grid.Column="0" Text="✔" FontSize="16"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               VerticalAlignment="Center" Margin="0,0,10,0">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+
+                                                    <!-- Dane konta -->
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock VerticalAlignment="Center" FontSize="14">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="FontWeight" Value="Normal"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                            <Run Text="{Binding Name, Mode=OneWay}"/>
+                                                            <Run Text=" (" Foreground="{StaticResource MutedBrush}"/>
+                                                            <Run Text="{Binding KindLabel, Mode=OneWay}" Foreground="{StaticResource MutedBrush}"/>
+                                                            <Run Text=")" Foreground="{StaticResource MutedBrush}"/>
+                                                        </TextBlock>
+                                                        <TextBlock FontSize="13" Margin="0,2,0,0">
+                                                            <Run Text="Saldo: "/>
+                                                            <Run Text="{Binding Balance, StringFormat={}{0:F2} zł, Mode=OneWay}" FontWeight="SemiBold"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+
+                                                    <!-- Typ (chip) -->
+                                                    <Border Grid.Column="2" CornerRadius="4" Padding="8,3"
+                                                            Background="#DDE6F0" Margin="10,0,10,0"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding KindLabel}" FontSize="11"
+                                                                   Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                                                    </Border>
+
+                                                    <!-- Przycisk Wybierz -->
+                                                    <Button Grid.Column="3"
+                                                            Content="Wybierz"
+                                                            Width="90"
+                                                            Command="{Binding DataContext.SelectAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                            CommandParameter="{Binding}">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                        <Setter Property="Opacity" Value="0.45"/>
+                                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <TextBlock Text="Brak kont. Dodaj pierwsze konto poniżej."
+                                           Foreground="{StaticResource MutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,10,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Accounts.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Formularz dodawania konta -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
                                 <TextBlock Text="Dodaj nowe konto" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
@@ -169,7 +290,7 @@
 
                                     <StackPanel Grid.Column="1" Margin="0,0,15,0" Width="150">
                                         <TextBlock Text="Typ" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox SelectedValue="{Binding NewAccountType}">
+                                        <ComboBox SelectedValue="{Binding NewAccountType}" SelectedValuePath="Content">
                                             <ComboBoxItem Content="Osobiste" IsSelected="True"/>
                                             <ComboBoxItem Content="Wspólne"/>
                                         </ComboBox>
@@ -182,6 +303,7 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
