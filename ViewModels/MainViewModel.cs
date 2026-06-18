@@ -107,7 +107,6 @@ namespace wpf_projekt.ViewModels
             var dbShared = await _accountRepository.GetSharedAccountsByUserAsync(_currentUser.Id);
             var dbTransactions = await _transactionRepository.GetAllWithDetailsByUserAsync(_currentUser.Id);
             var users = await _context.Users.Where(u => u.Id != _currentUser.Id).ToListAsync();
-
             var dbLogs = await _context.EventLogs.OrderByDescending(x => x.Timestamp).ToListAsync();
 
             foreach (var c in dbCategories) Categories.Add(c);
@@ -132,6 +131,10 @@ namespace wpf_projekt.ViewModels
 
             foreach (var t in dbTransactions) Transactions.Add(t);
             foreach (var log in dbLogs) Logs.Add(log);
+            foreach (var user in users)
+            {
+                Users.Add(user);
+            }
 
             // Przywróć aktywne konto lub auto-wybierz gdy jedno
             var previousId = AppSession.CurrentAccount?.Id;
@@ -141,6 +144,7 @@ namespace wpf_projekt.ViewModels
                 SetActiveAccount(restored);
             else if (Accounts.Count == 1)
                 SetActiveAccount(Accounts[0]);
+
         }
 
         //  Komendy
