@@ -33,6 +33,7 @@ namespace wpf_projekt.ViewModels
         public ObservableCollection<AccountListItem> Accounts { get; } = new();
         public ObservableCollection<TransactionType> Categories { get; } = new();
         public ObservableCollection<EventLog> Logs { get; } = new();
+        public ObservableCollection<User> Users { get; } = new();
 
         //  Właściwości bindowane — formularz transakcji (WALIDOWANE)
 
@@ -56,6 +57,8 @@ namespace wpf_projekt.ViewModels
         //  Właściwości bindowane — formularz konta
         [ObservableProperty] private string _newAccountName = string.Empty;
         [ObservableProperty] private string _newAccountType = "Osobiste";
+        [ObservableProperty]
+        private User? _selectedSecondUser;
 
         //  Właściwości bindowane — formularz transferu
         [ObservableProperty] private AccountListItem? _transferFrom;
@@ -97,13 +100,13 @@ namespace wpf_projekt.ViewModels
             Categories.Clear();
             Accounts.Clear();
             Transactions.Clear();
-            Logs.Clear();
+            Users.Clear();
 
             var dbCategories = await _categoryRepository.GetAllAsync();
             var dbPersonal = await _accountRepository.GetPersonalAccountsByUserAsync(_currentUser.Id);
             var dbShared = await _accountRepository.GetSharedAccountsByUserAsync(_currentUser.Id);
             var dbTransactions = await _transactionRepository.GetAllWithDetailsByUserAsync(_currentUser.Id);
-
+            var users = await _context.Users.Where(u => u.Id != _currentUser.Id).ToListAsync();
             var dbLogs = await _context.EventLogs.OrderByDescending(x => x.Timestamp).ToListAsync();
 
             foreach (var c in dbCategories) Categories.Add(c);
@@ -128,6 +131,10 @@ namespace wpf_projekt.ViewModels
 
             foreach (var t in dbTransactions) Transactions.Add(t);
             foreach (var log in dbLogs) Logs.Add(log);
+            foreach (var user in users)
+            {
+                Users.Add(user);
+            }
 
             // Przywróć aktywne konto lub auto-wybierz gdy jedno
             var previousId = AppSession.CurrentAccount?.Id;
@@ -137,6 +144,7 @@ namespace wpf_projekt.ViewModels
                 SetActiveAccount(restored);
             else if (Accounts.Count == 1)
                 SetActiveAccount(Accounts[0]);
+
         }
 
         //  Komendy
@@ -221,19 +229,35 @@ namespace wpf_projekt.ViewModels
             $"Utworzono konto: {name}");
 
             if (NewAccountType == "Wspólne")
-                await _accountRepository.AddSharedAccountAsync(new SharedAccount
+            {
+                if (SelectedSecondUser == null)
                 {
-                    Name = name,
-                    Balance = 0m,
-                    User1Id = _currentUser.Id,
-                    User2Id = _currentUser.Id
-                });
-            else
-                await _accountRepository.AddPersonalAccountAsync(new PersonalAccount
-                { Name = name, Balance = 0m, UserId = _currentUser.Id });
+                    MessageBox.Show("Wybierz drugiego użytkownika.");
+                    return;
+                }
 
+                await _accountRepository.AddSharedAccountAsync(
+                    new SharedAccount
+                    {
+                        Name = name,
+                        Balance = 0m,
+                        User1Id = _currentUser.Id,
+                        User2Id = SelectedSecondUser.Id
+                    });
+            }
+            else
+            {
+                await _accountRepository.AddPersonalAccountAsync(
+                    new PersonalAccount
+                    {
+                        Name = name,
+                        Balance = 0m,
+                        UserId = _currentUser.Id
+                    });
+            }
             await LoadDataAsync();
             NewAccountName = string.Empty;
+            SelectedSecondUser = null;
         }
 
         [RelayCommand]

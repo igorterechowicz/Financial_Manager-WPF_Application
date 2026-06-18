@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:wpf_projekt.Views"
         xmlns:vm="clr-namespace:wpf_projekt.ViewModels"
-        Title="Zarządzanie Finansami" Height="700" Width="950"
+        Title="Zarządzanie Finansami" Height="850" Width="950"
         Background="{StaticResource BackgroundBrush}" 
         WindowStartupLocation="CenterScreen">
 
@@ -296,9 +296,30 @@
                                         </ComboBox>
                                     </StackPanel>
 
+                                    <StackPanel Grid.Column="1"
+                        Margin="0,80,15,0"
+                        Width="150">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding NewAccountType}" Value="Wspólne">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+
+                                        <TextBlock Text="Drugi użytkownik" Style="{StaticResource FieldLabel}" />
+                                        <ComboBox
+                    ItemsSource="{Binding Users}"
+                    SelectedItem="{Binding SelectedSecondUser}"
+                    DisplayMemberPath="Email"/>
+                                    </StackPanel>
+
                                     <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
                                         <Button Content="Dodaj konto" Command="{Binding AddAccountCommand}"
-                                                Style="{StaticResource PrimaryBtn}" Width="140"/>
+                        Style="{StaticResource PrimaryBtn}" Width="140"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
