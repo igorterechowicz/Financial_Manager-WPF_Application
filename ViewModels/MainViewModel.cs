@@ -377,6 +377,96 @@ namespace wpf_projekt.ViewModels
                 SetActiveAccount(account);
         }
 
+        [RelayCommand]
+        private void StartEditAccount(AccountListItem? account)
+        {
+            if (account == null) return;
+            foreach (var a in Accounts)
+                a.IsEditing = false;
+            account.EditName = account.Name;
+            account.IsEditing = true;
+        }
+
+        [RelayCommand]
+        private void CancelEditAccount(AccountListItem? account)
+        {
+            if (account == null) return;
+            account.IsEditing = false;
+        }
+
+        [RelayCommand]
+        private async Task SaveEditAccountAsync(AccountListItem? account)
+        {
+            if (account == null) return;
+            var newName = account.EditName.Trim();
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                MessageBox.Show("Nazwa konta nie może być pusta.");
+                return;
+            }
+
+            try
+            {
+                if (account.Kind == AccountKind.Personal)
+                {
+                    var acc = await _accountRepository.GetPersonalAccountByIdAsync(account.Id);
+                    if (acc == null) { MessageBox.Show("Nie znaleziono konta."); return; }
+                    acc.Name = newName;
+                    await _accountRepository.UpdatePersonalAccountAsync(acc);
+                }
+                else
+                {
+                    var acc = await _accountRepository.GetSharedAccountByIdAsync(account.Id);
+                    if (acc == null) { MessageBox.Show("Nie znaleziono konta."); return; }
+                    acc.Name = newName;
+                    await _accountRepository.UpdateSharedAccountAsync(acc);
+                }
+
+                await _eventLogService.LogAsync(EventType.AccountUpdated, $"Zmieniono nazwę konta na: {newName}", account.Id);
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd zapisu: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private async Task DeleteAccountAsync(AccountListItem? account)
+        {
+            if (account == null) return;
+
+            string message = account.Kind == AccountKind.Personal
+                ? $"Czy na pewno chcesz usunąć konto \"{account.Name}\"?\nWszystkie powiązane transakcje zostaną usunięte."
+                : $"Czy na pewno chcesz opuścić konto wspólne \"{account.Name}\"?\nDrugi użytkownik zachowa konto jako osobiste wraz z całą historią transakcji.";
+
+            var result = MessageBox.Show(
+                message,
+                "Potwierdzenie",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                if (account.Kind == AccountKind.Personal)
+                    await _accountRepository.DeletePersonalAccountAsync(account.Id);
+                else
+                    await _accountRepository.ConvertSharedToPersonalAsync(account.Id, _currentUser.Id);
+
+                await _eventLogService.LogAsync(EventType.AccountDeleted, $"Opuszczono/usunięto konto: {account.Name}", account.Id);
+
+                if (ActiveAccount?.Id == account.Id && ActiveAccount?.Kind == account.Kind)
+                    ClearActiveAccount();
+
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd usuwania: {ex.Message}");
+            }
+        }
+
         private void ClearActiveAccount()
         {
             foreach (var a in Accounts)

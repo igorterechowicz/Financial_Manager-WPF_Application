@@ -17,5 +17,7 @@ namespace wpf_projekt.Repositories
         Task<User?> GetFirstUserAsync();
         Task<List<PersonalAccount>> GetPersonalAccountsByUserAsync(int userId);
         Task<List<SharedAccount>> GetSharedAccountsByUserAsync(int userId);
+        Task DeletePersonalAccountAsync(int id);
+        Task ConvertSharedToPersonalAsync(int sharedAccountId, int leavingUserId);
     }
 }

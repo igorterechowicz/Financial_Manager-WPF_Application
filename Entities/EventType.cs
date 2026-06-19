@@ -6,6 +6,8 @@
         TransactionAdded,
         TransactionDeleted,
         AccountCreated,
+        AccountUpdated,
+        AccountDeleted,
         TransferCompleted
     }
 }

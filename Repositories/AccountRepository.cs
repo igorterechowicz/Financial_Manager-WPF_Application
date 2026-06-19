@@ -61,5 +61,44 @@ namespace wpf_projekt.Repositories
             => _context.SharedAccounts
                 .Where(a => a.User1Id == userId || a.User2Id == userId)
                 .ToListAsync();
+
+        public async Task DeletePersonalAccountAsync(int id)
+        {
+            var account = await _context.PersonalAccounts
+                .Include(a => a.Transactions)
+                .FirstOrDefaultAsync(a => a.Id == id);
+            if (account == null) return;
+            _context.Transactions.RemoveRange(account.Transactions);
+            _context.PersonalAccounts.Remove(account);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ConvertSharedToPersonalAsync(int sharedAccountId, int leavingUserId)
+        {
+            var shared = await _context.SharedAccounts
+                .Include(a => a.Transactions)
+                .FirstOrDefaultAsync(a => a.Id == sharedAccountId);
+            if (shared == null) return;
+
+            int otherUserId = shared.User1Id == leavingUserId ? shared.User2Id : shared.User1Id;
+
+            var personal = new PersonalAccount
+            {
+                Name = shared.Name,
+                Balance = shared.Balance,
+                UserId = otherUserId
+            };
+            _context.PersonalAccounts.Add(personal);
+            await _context.SaveChangesAsync();
+
+            foreach (var t in shared.Transactions)
+            {
+                t.SharedAccountId = null;
+                t.PersonalAccountId = personal.Id;
+            }
+
+            _context.SharedAccounts.Remove(shared);
+            await _context.SaveChangesAsync();
+        }
     }
 }
