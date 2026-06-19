@@ -5,26 +5,26 @@
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{StaticResource BackgroundBrush}">
 
-    <Border Style="{StaticResource CardStyle}" Margin="15">
+    <Border Style="{StaticResource CardStyle}" Margin="10">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+                <RowDefinition Height="Auto" MinHeight="51"/>
             </Grid.RowDefinitions>
 
             <TextBlock Text="Nazwa nowej kategorii" 
-                       Grid.Row="0" Style="{StaticResource FieldLabel}"/>
+                       Grid.Row="0" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
 
             <TextBox x:Name="CategoryNameTextBox"
-                     Grid.Row="1" VerticalAlignment="Top" Margin="0,5,0,0"
-                     Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged}"/>
+                     Grid.Row="1" VerticalAlignment="Center"
+                     Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged}" Height="30"/>
 
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0" Width="130">
                 <Button Content="Anuluj" Style="{StaticResource SecondaryBtn}" 
-                        Margin="0,0,10,0" Command="{Binding CancelCommand}"/>
+                        Margin="0,0,10,0" Command="{Binding CancelCommand}" Width="60"/>
                 <Button Content="Zapisz" Style="{StaticResource PrimaryBtn}" 
-                        IsDefault="True" Command="{Binding SaveCommand}"/>
+                        IsDefault="True" Command="{Binding SaveCommand}" Width="60"/>
             </StackPanel>
         </Grid>
     </Border>
