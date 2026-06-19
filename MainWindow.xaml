@@ -66,9 +66,6 @@
                                         <TextBox x:Name="AmountTextBox" Margin="0,0,0,15"
                                         Text="{Binding AmountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                           PreviewTextInput="AmountTextBox_PreviewTextInput"/>
-                                        <TextBlock Text="Konto" Style="{StaticResource FieldLabel}"/>
-                                        <ComboBox Margin="0,0,0,15" ItemsSource="{Binding Accounts}"
-                                                  SelectedItem="{Binding SelectedAccount}" DisplayMemberPath="DisplayName"/>
                                         <TextBlock Text="Data transakcji" Style="{StaticResource FieldLabel}"/>
                                         <DatePicker Margin="0,0,0,15" SelectedDate="{Binding TransactionDate}"/>
                                     </StackPanel>
