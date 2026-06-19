@@ -29,6 +29,30 @@ namespace wpf_projekt.Models
             }
         }
 
+        private bool _isEditing;
+        public bool IsEditing
+        {
+            get => _isEditing;
+            set
+            {
+                if (_isEditing == value) return;
+                _isEditing = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEditing)));
+            }
+        }
+
+        private string _editName = string.Empty;
+        public string EditName
+        {
+            get => _editName;
+            set
+            {
+                if (_editName == value) return;
+                _editName = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EditName)));
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 }

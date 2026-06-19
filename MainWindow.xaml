@@ -154,7 +154,7 @@
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <TextBlock Text="Twoje konta" FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
-                                <TextBlock Text="Kliknij 'Wybierz' aby ustawić konto jako aktywne. Kliknij 'Odznacz' aby cofnąć wybór."
+                                <TextBlock Text="Wybierz aktywne konto, edytuj jego nazwę lub usuń konto z listy."
                                            Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,12"/>
 
                                 <ListBox ItemsSource="{Binding Accounts}"
@@ -211,8 +211,18 @@
                                                         </TextBlock.Style>
                                                     </TextBlock>
 
-                                                    <!-- Dane konta -->
+                                                    <!-- Dane konta (widok normalny) -->
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
                                                         <TextBlock VerticalAlignment="Center" FontSize="14">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
@@ -235,45 +245,127 @@
                                                         </TextBlock>
                                                     </StackPanel>
 
-                                                    <!-- Typ (chip) -->
+                                                    <!-- Pole edycji nazwy (widok edycji) -->
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+                                                        <TextBlock Text="Nowa nazwa:" FontSize="11"
+                                                                   Foreground="{StaticResource MutedBrush}" Margin="0,0,0,3"/>
+                                                        <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                                                 FontSize="14" MinWidth="160"/>
+                                                    </StackPanel>
+
+                                                    <!-- Typ (chip) — ukryty podczas edycji -->
                                                     <Border Grid.Column="2" CornerRadius="4" Padding="8,3"
                                                             Background="#DDE6F0" Margin="10,0,10,0"
                                                             VerticalAlignment="Center">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
                                                         <TextBlock Text="{Binding KindLabel}" FontSize="11"
                                                                    Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
                                                     </Border>
 
-                                                    <!-- Przycisk wyboru / odznaczenia -->
-                                                    <Grid Grid.Column="3">
-                                                        <Button Content="Wybierz" Width="90"
-                                                                Command="{Binding DataContext.SelectAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                                                CommandParameter="{Binding}">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+                                                    <!-- Przyciski akcji -->
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+
+                                                        <!-- Tryb normalny: Wybierz/Odznacz + Edytuj + Usuń -->
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <StackPanel.Style>
+                                                                <Style TargetType="StackPanel">
                                                                     <Setter Property="Visibility" Value="Visible"/>
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
                                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        <Button Content="Odznacz" Width="90"
-                                                                Command="{Binding DataContext.SelectAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                                                CommandParameter="{Binding}">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+                                                            </StackPanel.Style>
+                                                            <Grid Margin="0,0,6,0">
+                                                                <Button Content="Wybierz" Width="80"
+                                                                        Command="{Binding DataContext.SelectAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                </Button>
+                                                                <Button Content="Odznacz" Width="80"
+                                                                        Command="{Binding DataContext.SelectAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                </Button>
+                                                            </Grid>
+                                                            <Button Content="Edytuj" Width="70" Margin="0,0,6,0"
+                                                                    Style="{StaticResource SecondaryBtn}"
+                                                                    Command="{Binding DataContext.StartEditAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                            <Button Content="Usuń" Width="60"
+                                                                    Command="{Binding DataContext.DeleteAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+                                                                        <Setter Property="Background" Value="#FDECEA"/>
+                                                                        <Setter Property="BorderBrush" Value="#E57373"/>
+                                                                        <Setter Property="Foreground" Value="#C62828"/>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </StackPanel>
+
+                                                        <!-- Tryb edycji: Zapisz + Anuluj -->
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <StackPanel.Style>
+                                                                <Style TargetType="StackPanel">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
                                                                             <Setter Property="Visibility" Value="Visible"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                    </Grid>
+                                                            </StackPanel.Style>
+                                                            <Button Content="Zapisz" Width="75" Margin="0,0,6,0"
+                                                                    Style="{StaticResource PrimaryBtn}"
+                                                                    Command="{Binding DataContext.SaveEditAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                            <Button Content="Anuluj" Width="75"
+                                                                    Style="{StaticResource SecondaryBtn}"
+                                                                    Command="{Binding DataContext.CancelEditAccountCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </StackPanel>
+
+                                                    </StackPanel>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
